@@ -1,0 +1,238 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "My Collection";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold mb-0"><i class="bi bi-collection me-2 text-primary"></i>My Collection</h1>
+    <a href="/Media/Search" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Add Media
+    </a>
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="h2 mb-0 text-primary fw-bold">@Model.Movies.Count</div>
+            <div class="small text-secondary"><i class="bi bi-film me-1"></i>Movies</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="h2 mb-0 text-info fw-bold">@Model.TvShows.Count</div>
+            <div class="small text-secondary"><i class="bi bi-tv me-1"></i>TV Shows</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="h2 mb-0 text-success fw-bold">@Model.Books.Count</div>
+            <div class="small text-secondary"><i class="bi bi-book me-1"></i>Books</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center p-3">
+            <div class="h2 mb-0 text-warning fw-bold">@Model.VideoGames.Count</div>
+            <div class="small text-secondary"><i class="bi bi-controller me-1"></i>Games</div>
+        </div>
+    </div>
+</div>
+
+@if (!Model.AllItems.Any())
+{
+    <div class="text-center py-5">
+        <i class="bi bi-collection-play text-secondary" style="font-size: 4rem;"></i>
+        <h4 class="mt-3 text-secondary">Your collection is empty</h4>
+        <p class="text-secondary">Start adding movies, TV shows, books, and games!</p>
+        <a href="/Media/Search" class="btn btn-primary mt-2">
+            <i class="bi bi-plus-lg me-1"></i>Add Your First Item
+        </a>
+    </div>
+}
+else
+{
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="mediaTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#all">All (@Model.AllItems.Count)</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#movies">
+                <i class="bi bi-film me-1"></i>Movies (@Model.Movies.Count)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tv">
+                <i class="bi bi-tv me-1"></i>TV (@Model.TvShows.Count)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#books">
+                <i class="bi bi-book me-1"></i>Books (@Model.Books.Count)
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#games">
+                <i class="bi bi-controller me-1"></i>Games (@Model.VideoGames.Count)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        @foreach (var (tabId, items) in new[] {
+            ("all", Model.AllItems),
+            ("movies", Model.Movies),
+            ("tv", Model.TvShows),
+            ("books", Model.Books),
+            ("games", Model.VideoGames)
+        })
+        {
+            <div class="tab-pane fade @(tabId == "all" ? "show active" : "")" id="@tabId">
+                <div class="row g-3">
+                    @foreach (var item in items)
+                    {
+                        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                            <div class="card media-card h-100" data-bs-toggle="modal" data-bs-target="#modal-@item.Id">
+                                @if (!string.IsNullOrEmpty(item.CoverImageUrl))
+                                {
+                                    <img src="@item.CoverImageUrl" class="cover-img" alt="@item.Title" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <div class="cover-placeholder">
+                                        @switch (item.MediaType)
+                                        {
+                                            case MediaType.Movie: <i class="bi bi-film"></i> break;
+                                            case MediaType.TvShow: <i class="bi bi-tv"></i> break;
+                                            case MediaType.Book: <i class="bi bi-book"></i> break;
+                                            default: <i class="bi bi-controller"></i> break;
+                                        }
+                                    </div>
+                                }
+                                <div class="card-body p-2">
+                                    <p class="card-title small fw-semibold mb-1 text-truncate" title="@item.Title">@item.Title</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge @GetStatusColor(item.Status) badge-type">@item.Status</span>
+                                        @if (item.UserRating.HasValue)
+                                        {
+                                            <small class="star-rating">&#9733; @item.UserRating</small>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modal for item -->
+                        <div class="modal fade" id="modal-@item.Id" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content" style="background:#161b22; border:1px solid #30363d;">
+                                    <div class="modal-header border-secondary">
+                                        <h5 class="modal-title">@item.Title</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                @if (!string.IsNullOrEmpty(item.CoverImageUrl))
+                                                {
+                                                    <img src="@item.CoverImageUrl" class="img-fluid rounded" alt="@item.Title" />
+                                                }
+                                            </div>
+                                            <div class="col-md-9">
+                                                <div class="mb-2">
+                                                    @if (!string.IsNullOrEmpty(item.Genre))
+                                                    {
+                                                        <span class="badge bg-secondary me-1">@item.Genre</span>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(item.ReleaseDate))
+                                                    {
+                                                        <span class="text-secondary small">@item.ReleaseDate</span>
+                                                    }
+                                                </div>
+                                                @if (!string.IsNullOrEmpty(item.Creator))
+                                                {
+                                                    <p class="text-secondary small mb-2">
+                                                        @GetCreatorLabel(item.MediaType): <strong class="text-light">@item.Creator</strong>
+                                                    </p>
+                                                }
+                                                @if (item.Rating.HasValue)
+                                                {
+                                                    <p class="text-secondary small mb-2">
+                                                        Rating: <span class="star-rating">&#9733; @item.Rating?.ToString("F1")</span>
+                                                    </p>
+                                                }
+                                                @if (!string.IsNullOrEmpty(item.Description))
+                                                {
+                                                    <p class="small text-secondary mb-3" style="max-height:120px; overflow-y:auto;">@item.Description</p>
+                                                }
+
+                                                <form asp-action="Edit" asp-controller="Media" method="post">
+                                                    <input type="hidden" name="Id" value="@item.Id" />
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-6">
+                                                            <label class="form-label small">Status</label>
+                                                            <select name="Status" class="form-select form-select-sm" style="background:#0d1117; color:#e6edf3; border-color:#30363d;">
+                                                                @foreach (WatchStatus s in Enum.GetValues(typeof(WatchStatus)))
+                                                                {
+                                                                    if (item.Status == s)
+                                                                    {
+                                                                        <option value="@s" selected>@s</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="@s">@s</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <label class="form-label small">Your Rating (1-10)</label>
+                                                            <input type="number" name="UserRating" min="1" max="10" value="@item.UserRating" class="form-control form-control-sm" style="background:#0d1117; color:#e6edf3; border-color:#30363d;" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label small">Notes</label>
+                                                        <textarea name="UserNotes" rows="2" class="form-control form-control-sm" style="background:#0d1117; color:#e6edf3; border-color:#30363d;">@item.UserNotes</textarea>
+                                                    </div>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-secondary">
+                                        <form asp-action="Delete" asp-controller="Media" method="post" onsubmit="return confirm('Remove this item?')">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                <i class="bi bi-trash me-1"></i>Remove
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@functions {
+    string GetStatusColor(WatchStatus status) => status switch
+    {
+        WatchStatus.Completed => "bg-success",
+        WatchStatus.InProgress => "bg-primary",
+        WatchStatus.Dropped => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    string GetCreatorLabel(MediaType type) => type switch
+    {
+        MediaType.Movie => "Director",
+        MediaType.Book => "Author",
+        MediaType.VideoGame => "Developer",
+        _ => "Creator"
+    };
+}

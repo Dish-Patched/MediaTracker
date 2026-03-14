@@ -1,0 +1,21 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## SQLite database
+*.db
+*.db-shm
+*.db-wal
+
+## Secrets — add your keys to appsettings.Development.json locally
+appsettings.json
+
+## Keep the template
+!appsettings.Development.json
+
+## OS
+.DS_Store
+Thumbs.db
