@@ -1,6 +1,6 @@
 # MediaTracker
 
-A personal media tracking web app built with ASP.NET Core. Track everything you watch, read, and play — movies, TV shows, books, and video games — all in one place.
+A personal media tracking web app built with ASP.NET Core. Track everything you watch, read, and play: movies, TV shows, books, and video games, all in one place.
 
 ## Features
 
