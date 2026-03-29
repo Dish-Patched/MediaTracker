@@ -6,8 +6,19 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    // Production: Railway provides DATABASE_URL as postgresql://user:pass@host:port/db
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(databaseUrl));
+}
+else
+{
+    // Local development: use SQLite
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -34,11 +45,14 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Auto-migrate on startup
+// Auto-create/migrate database on startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DATABASE_URL")))
+        db.Database.EnsureCreated(); // PostgreSQL: create tables directly
+    else
+        db.Database.Migrate();       // SQLite: run migrations
 }
 
 if (!app.Environment.IsDevelopment())
